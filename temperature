@@ -1,0 +1,87 @@
+//------------------------------------------------------------------------------------------------------//
+//   Project:            Temperatursensor, MQTT connection to raspberry pi                              //
+//                                                                                                      //
+//   More information and hardware at ***                                                               //
+//                                                                                        by LBuehne    //
+//                                                                                                      //
+//------------------------------------------------------------------------------------------------------//
+
+//--------------Include libraries--------------//
+#include <ESP8266WiFi.h> // Enables the ESP8266 to connect to the local network (via WiFi)
+#include <PubSubClient.h> // Allows us to connect to, and publish to the MQTT broker
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+//---------Config Sensor and LED---------------//
+#define ONE_WIRE_BUS D2
+#define led_pin 2 //LED
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature DS18B20(&oneWire);
+char temperatureCString[6];
+
+//---------WIFI Setting------------------------//
+const char* ssid = "*SSID*"; //Replace *SSID* with your WIFI name
+const char* wifi_password = "*Pass*"; //Change *Pass* with your WIFI password
+
+//---------MQTT Setting------------------------//
+const char* mqtt_server = "*SERVER*"; //Replace *SERVER* with your MQTT server ip adress
+const char* mqtt_topic = "*topic*"; //Replace *topic* with your MQTT topic
+const char* mqtt_port = "1883"; //The port where the MQTT server listens
+const char* clientID = "Sensor Hottub"; // Specific ID for this device (random)
+
+//---------Join MQTT Server-------------------//
+WiFiClient wifiClient;
+PubSubClient client(mqtt_server, mqtt_port, wifiClient);
+long lastMsg = 0;
+char msg[50];
+int value = 0;
+
+void setup() 
+{
+  DS18B20.begin(); 
+  Serial.begin(115200);
+  pinMode(led_pin, OUTPUT);
+  WiFi.begin(ssid, wifi_password);
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("WIFI connected!");
+  }
+  if (client.connect(clientID)) 
+  {
+    Serial.println("Connected to MQTT Broker!");
+  }
+}
+
+void loop() 
+{
+if (WiFi.status() != WL_CONNECTED) //Check if WIFI is connected
+{
+  Serial.println("Restart setup sequence!");
+  setup(); //Run setup when WIFI isn't connected
+}
+getTemperature(); //Read the temperature
+client.publish(mqtt_topic, temperatureCString); //Publish temperature to MQTT Server
+}
+
+void getTemperature() //Get temperature from DS18B20 and convert
+{
+ float tempC;
+ do {
+ DS18B20.requestTemperatures(); 
+ tempC = DS18B20.getTempCByIndex(0);
+ dtostrf(tempC, 2, 2, temperatureCString);
+ delay(12000);
+ } while (tempC == 85.0 || tempC == (-127.0));
+
+digitalWrite(led_pin, HIGH); //LED ON
+delay(200);
+digitalWrite(led_pin, LOW); //LED OFF
+Serial.print("Temperature: "); //Print Serial Data
+Serial.print(tempC);
+Serial.println(" °C");
+}
