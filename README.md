@@ -1,4 +1,6 @@
-# Simply read temperature from DS18B20 Temperatur-Sensor and send via MQTT to your server
+# Simply MQTT Temperature
+## About
+This device reads the temperature from a DS18B20 Temperatur-Sensor and sends it to a MQTT Server (on a raspberry pi, e.g.).
 ## Assembly
 ![Image of wemos](/temperaturereading.jpg)
 ## Parts list
