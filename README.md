@@ -1,4 +1,4 @@
-# Simply MQTT Temperature
+# Simple MQTT Temperature
 ## About
 This device reads the temperature from a DS18B20 Temperatur-Sensor and sends it to a MQTT Server (on a raspberry pi, e.g.).
 ## Assembly
